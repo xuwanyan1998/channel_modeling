@@ -18,14 +18,14 @@ NUM_DELAY = 32
 NUM_SAMPLE_TRAIN = 500
 LATENT_DIM = 128
 BATCH_SIZE = 256
-EPOCH = 2
+EPOCH = 20
 
 data_train = h5py.File('H1_32T4R.mat', 'r')
-data_train = np.transpose(data_train['H1_32T4R'][:])
+data_train = np.transpose(data_train['H1_32T4R'][:])  # (500,4,32,32)
 data_train = data_train[:, :, :, :, np.newaxis]
 data_train = np.concatenate([data_train['real'], data_train['imag']], 4)
-data_train = np.reshape(data_train, [NUM_SAMPLE_TRAIN, NUM_RX* NUM_TX, NUM_DELAY* 2, 1])
-train_channel = norm_data(data_train, NUM_SAMPLE_TRAIN, NUM_RX, NUM_TX, NUM_DELAY)
+data_train = np.reshape(data_train, [NUM_SAMPLE_TRAIN, NUM_RX* NUM_TX, NUM_DELAY* 2, 1])  # (500,128,64,1)
+train_channel = norm_data(data_train, NUM_SAMPLE_TRAIN, NUM_RX, NUM_TX, NUM_DELAY)  # (500,1,128,64)
 
 class Discriminator(nn.Module):
     def __init__(self):
@@ -92,7 +92,7 @@ d_model = Discriminator()
 
 use_cuda = torch.cuda.is_available()
 if use_cuda:
-    gpu = 0
+    gpu = 3
 if use_cuda:
     d_model = d_model.cuda(gpu)
     g_model = g_model.cuda(gpu)
@@ -165,7 +165,7 @@ for iteration in range(int(EPOCH*(NUM_SAMPLE_TRAIN/BATCH_SIZE))):
     generator_optimizer.step()
 
     if iteration % (int(NUM_SAMPLE_TRAIN/BATCH_SIZE)) == 0:
-        print('Epoch = ' + str(int(iteration / int(NUM_SAMPLE_TRAIN/BATCH_SIZE))) + ', d_loss = ' + str(d_loss.cpu().data.numpy()) + ', g_loss = ' + str(g_loss.cpu().data.numpy()))
         torch.save(g_model, 'generator.pth.tar')
+        print('Epoch = ' + str(int(iteration / int(NUM_SAMPLE_TRAIN/BATCH_SIZE))) + ', d_loss = ' + str(d_loss.cpu().data.numpy()) + ', g_loss = ' + str(g_loss.cpu().data.numpy()))
 
 
